@@ -86,6 +86,7 @@ if __name__=="__main__":
                 new_entries, new_attributes = list(segment[0]), dict(segment[1])
                 new_entries[2]='CDS'
                 new_attributes['Name']=names_by_id[segment_id]
+                if "Parent" in new_attributes: new_attributes.pop("Parent")
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
 
     # new_features = []
