@@ -1,7 +1,6 @@
 #!/bin/env python3
-import shutil, copy
+import shutil
 from Bio import SeqIO
-from BCBio import GFF
 from collections import defaultdict
 
 
@@ -21,7 +20,6 @@ def get_reference_sequence(accession):
 
 def get_gff(accession):
     url = f"https://www.ncbi.nlm.nih.gov/sviewer/viewer.cgi?db=nuccore&report=gff3&id={accession}"
-    db_file = f"tmp/{accession}_gff.db"
     import urllib
     return [x.decode() for x in urllib.request.urlopen(url).readlines()]
 
@@ -37,23 +35,30 @@ if __name__=="__main__":
     # write the reference sequence to the output directory
     SeqIO.write(reference, f"{args.output_dir}/files/reference.fasta", "fasta")
 
+    # collect all cds and alternative annotations of protein sequences
     all_cds = defaultdict(lambda: defaultdict(list))
     for line in gff:
         if line[0]=='#':
             continue
         entries = line.strip().split('\t')
-        if len(entries)<9: continue
+        if len(entries)<9:
+            continue # invalid line
+
+        # parse attributes and feature type and ID
         attributes = {x.split('=')[0]:x.split('=')[1] for x in entries[-1].split(';')}
         feature_type = entries[2]
-        cds_id = attributes['ID'].split(':')[0].split('-')[-1] #, attributes.get('gene', 'NA'))
+        # IDs look like this: ID=id-NP_057850.1:133..363 where the part after to colon is the range in the translated sequence (exists in cases of mature protein annotations)
+        feature_id = attributes['ID'].split(':')[0].split('-')[-1]
         if feature_type=='CDS':
-            all_cds[cds_id]['CDS'].append([entries[:-1], attributes])
+            all_cds[feature_id]['CDS'].append([entries[:-1], attributes])
         elif feature_type in ['mature_protein_region_of_CDS', 'mat_peptide', 'mat_protein']:
-            all_cds[cds_id]['mature_protein'].append([entries[:-1], attributes])
+            all_cds[feature_id]['mature_protein'].append([entries[:-1], attributes])
 
 
     streamlined_cds = {}
     names_by_id = {}
+    # loop through all CDS and ask the user to pick one of the annotations
+    # allow renaming of the CDS to user friendly names
     for cds_id, cds_sets in all_cds.items():
         if len(cds_sets)>1:
             print(f"\nCDS {cds_id} is annotated in multiple ways:")
@@ -71,10 +76,11 @@ if __name__=="__main__":
 
         for segment in segments:
             segment_id = segment[1]["ID"]
+            # only needed for one segment per CDS, skip if already in streamlined_cds
             if segment_id not in streamlined_cds:
                 streamlined_cds[segment_id] = []
 
-                print(f"Attributes of are:")
+                print(f"Attributes of the segment with ID='{segment_id}' are:")
                 for k,v in segment[1].items():
                     print(f'\t\t{k}:\t{v}')
                 new_name = input("Enter desired name (leave empty to drop): ")
@@ -82,6 +88,7 @@ if __name__=="__main__":
                     names_by_id[segment_id] = new_name
                 else:
                     continue
+            # if renamed and selected, add the segment to the list of segments
             if segment_id in names_by_id:
                 new_entries, new_attributes = list(segment[0]), dict(segment[1])
                 new_entries[2]='CDS'
@@ -89,23 +96,15 @@ if __name__=="__main__":
                 if "Parent" in new_attributes: new_attributes.pop("Parent")
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
 
-    # new_features = []
-    # for feature in reference.features:
-    #     if feature.type == "CDS":
-    #         new_feature = copy.deepcopy(feature)
-    #         new_feature.type = "gene"
-    #         new_feature.qualifiers["gene_name"] = new_feature.qualifiers["gene"] if 'gene' in new_feature.qualifiers else new_feature.qualifiers.get("product", [f"gene {len(new_features)+1}"])
-    #         new_features.append(new_feature)
-
-    # reference.features = new_features
-    # with open(f"{args.output_dir}/files/genemap.gff", "w") as f:
-    #     GFF.write([reference], f)
+    # write the gff file as a simple text file line by line
     with open(f"{args.output_dir}/files/genemap.gff", "w") as f:
+        # write the header and the region line
         for line in gff:
             entries = line.split('\t')
             if entries[0][0]=='#' or (len(entries)>8 and entries[2]=='region'):
                 f.write(line)
 
+        # write the CDS lines
         for cds in streamlined_cds:
             for segment in streamlined_cds[cds]:
                 attributes = ';'.join([f"{k}={v}" for k,v in sorted(segment[1].items(), key=lambda x:(x[0]!='Name', len(x[1])))])
