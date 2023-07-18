@@ -29,11 +29,8 @@ if __name__=="__main__":
     reference = get_reference_sequence(args.reference)
     gff = get_gff(args.reference)
 
-    # copy the template to the output directory
-    shutil.copytree(f"files", f"{args.output_dir}/files")
-
     # write the reference sequence to the output directory
-    SeqIO.write(reference, f"{args.output_dir}/files/reference.fasta", "fasta")
+    SeqIO.write(reference, f"{args.output_dir}/reference.fasta", "fasta")
 
     # collect all cds and alternative annotations of protein sequences
     all_cds = defaultdict(lambda: defaultdict(list))
@@ -97,7 +94,7 @@ if __name__=="__main__":
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
 
     # write the gff file as a simple text file line by line
-    with open(f"{args.output_dir}/files/genemap.gff", "w") as f:
+    with open(f"{args.output_dir}/genemap.gff", "w") as f:
         # write the header and the region line
         for line in gff:
             entries = line.split('\t')
