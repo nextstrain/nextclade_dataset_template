@@ -94,7 +94,7 @@ if __name__=="__main__":
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
 
     # write the gff file as a simple text file line by line
-    with open(f"{args.output_dir}/genemap.gff", "w") as f:
+    with open(f"{args.output_dir}/annotation.gff", "w") as f:
         # write the header and the region line
         for line in gff:
             entries = line.split('\t')

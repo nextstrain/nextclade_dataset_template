@@ -7,6 +7,7 @@ import json
 if __name__=="__main__":
     parser = argparse.ArgumentParser(description='Assign clades to a tree')
     parser.add_argument('--tree', type=str, help='Newick tree file')
+    parser.add_argument('--clade-key', type=str, default='clade', help='Key to use for clade lookup in metadata')
     parser.add_argument('--metadata', type=str, help='metadata file with subtype information')
     parser.add_argument('--output', type=str, help='output file')
     args = parser.parse_args()
@@ -14,7 +15,7 @@ if __name__=="__main__":
     tree = Phylo.read(args.tree, 'newick')
     metadata = pd.read_csv(args.metadata, sep='\t', index_col=0)
 
-    node_to_subtype = {x.Index: x.subtype for x in metadata.itertuples()}
+    node_to_subtype = {k: x[args.clade_key] for k, x in metadata.iterrows()}
     nodes_by_subtype = defaultdict(list)
 
     for node in tree.get_terminals():

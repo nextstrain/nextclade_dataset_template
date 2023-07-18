@@ -2,6 +2,8 @@ genes: ["pro", "RT-p66", "RT-p51", "INT",
         "p17", "p24", "p2", "p7", "p1", "p6",
         "vif", "vpr", "tat",  "rev", "vpu","gp120", "gp41", "nef"]
 
+reference_name: "NC_001802"
+
 sequences: "data/HIV-1/sequences.fasta"
 example_data: "data/HIV-1/example_data.fasta"
 metadata: "data/HIV-1/metadata.tsv"
@@ -11,5 +13,7 @@ auspice_config: "profiles/HIV-1/auspice_config.json"
 build_dir: "results/HIV-1"
 qc_json:  "profiles/HIV-1/qc.json"
 dataset_dir: "datasets/HIV-1"
+
+clade_key: "subtype"
 
 refine_options: "--root min_dev"

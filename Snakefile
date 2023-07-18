@@ -41,7 +41,8 @@ rule tree:
 rule refine:
     input:
         tree = build_dir + "/tree_raw.nwk",
-        metadata = config["metadata"]
+        metadata = config["metadata"],
+        alignment = build_dir + "/alignment.fasta"
     output:
         tree = build_dir + "/tree.nwk",
         node_data = build_dir + "/branch_lengths.json"
@@ -50,7 +51,7 @@ rule refine:
     shell:
         """
         augur refine --tree {input.tree} --metadata {input.metadata} \
-                     {params.options} \
+                     --alignment {input.alignment} {params.options} \
                      --output-tree {output.tree} --output-node-data {output.node_data}
         """
 
@@ -89,15 +90,17 @@ rule clades_from_metadata:
         metadata = config["metadata"]
     output:
         build_dir + "/clades.json"
+    params:
+        clade_key = config.get("clade_key", "clade"),
     shell:
         """
-        python3 scripts/assign_clades.py --tree {input.tree} --metadata {input.metadata} --output {output}
+        python3 scripts/assign_clades.py --tree {input.tree} --metadata {input.metadata} \
+                                         --clade-key {params.clade_key} --output {output}
         """
 
 rule clades_from_tsv:
     input:
         tree = build_dir + "/tree.nwk",
-        metadata = build_dir + "/metadata.tsv",
         clades = config.get("clades",''),
         muts = [build_dir + "/nt_muts.json", build_dir + "/aa_muts.json"]
     output:
@@ -121,7 +124,7 @@ rule attach_root_mutations:
     params:
         genes = genes,
         translations= expand(build_dir + "/translation_{gene}.fasta",gene=genes),
-        reference = "NC_001802"
+        reference = config['reference_name']
     shell:
         """
         python3 scripts/attach_root_mutations.py \
