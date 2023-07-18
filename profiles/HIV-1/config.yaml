@@ -3,6 +3,7 @@ genes: ["pro", "RT-p66", "RT-p51", "INT",
         "vif", "vpr", "tat",  "rev", "vpu","gp120", "gp41", "nef"]
 
 sequences: "data/HIV-1/sequences.fasta"
+example_data: "data/HIV-1/example_data.fasta"
 metadata: "data/HIV-1/metadata.tsv"
 reference: "profiles/HIV-1/reference.fasta"
 annotation: "profiles/HIV-1/annotation.gff"
@@ -11,4 +12,4 @@ build_dir: "results/HIV-1"
 qc_json:  "profiles/HIV-1/qc.json"
 dataset_dir: "datasets/HIV-1"
 
-
+refine_options: "--root min_dev"

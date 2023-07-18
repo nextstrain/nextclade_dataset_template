@@ -17,7 +17,7 @@
     "primers": "primers.csv",
     "qc": "qc.json",
     "reference": "reference.fasta",
-    "sequences": "sequences.fasta",
+    "sequences": "example_data.fasta",
     "tree": "tree.json",
     "virusPropertiesJson": "virus_properties.json"
   },

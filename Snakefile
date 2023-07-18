@@ -46,7 +46,7 @@ rule refine:
         tree = build_dir + "/tree.nwk",
         node_data = build_dir + "/branch_lengths.json"
     params:
-        options = config.get("refine-options", "")
+        options = config.get("refine_options", "")
     shell:
         """
         augur refine --tree {input.tree} --metadata {input.metadata} \
@@ -158,12 +158,13 @@ rule assemble:
         primers = config.get("primers", "dummy_files/primers.csv"),
         virus_properties = config.get("virus_properties", "dummy_files/virus_properties.json"),
         qc = config.get("qc_json", "dummy_files/qc.json"),
-        example_data = config.get("example_data", config["reference"]),
+        tag = config.get("tag_json", "dummy_files/tag.json")
     output:
         config['dataset_dir'] + "/tree.json",
     params:
-        dataset_dir = config['dataset_dir']
+        dataset_dir = config['dataset_dir'],
+        example_data = config.get("example_data", "")
     shell:
         """
-        cp {input} {params.dataset_dir}
+        cp {input} {params.example_data} {params.dataset_dir}
         """
