@@ -1,0 +1,40 @@
+{
+  "title": "Nextclade dataset for HIV-1 subtypes",
+  "build_url": "https://github.com/neherlab/nextclade_data_workflows",
+  "maintainers": [
+    { "name": "Richard Neher", "url": "https://neherlab.org" }
+  ],
+  "data_provenance": [
+    {
+      "name": "LANL"
+    }
+  ],
+  "colorings": [
+    {
+      "key": "country",
+      "title": "Country",
+      "type": "categorical"
+    },
+    {
+      "key": "date",
+      "title": "Sample Date",
+      "type": "ordinal"
+    }
+  ],
+  "filters": [
+    "country",
+    "clade_membership"
+  ],
+  "display_defaults": {
+    "color_by": "clade_membership",
+    "distance_measure": "div",
+    "branch_label": "clade"
+  },
+  "panels": ["tree","entropy"],
+  "extensions": {
+    "nextclade": {
+      "clade_node_attrs": [
+      ]
+    }
+  }
+}

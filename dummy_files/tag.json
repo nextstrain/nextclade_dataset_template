@@ -13,7 +13,7 @@
   },
   "enabled": true,
   "files": {
-    "geneMap": "genemap.gff",
+    "geneMap": "annotation.gff",
     "primers": "primers.csv",
     "qc": "qc.json",
     "reference": "reference.fasta",

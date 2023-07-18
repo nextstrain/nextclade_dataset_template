@@ -148,3 +148,22 @@ rule export:
         augur export v2 --tree {input.tree} --node-data {input.node_data} \
                         --auspice-config {input.auspice_config} --output {output} --minify-json
         """
+
+
+rule assemble:
+    input:
+        tree = build_dir + "/tree.json",
+        reference = config["reference"],
+        annotation = config["annotation"],
+        primers = config.get("primers", "dummy_files/primers.csv"),
+        virus_properties = config.get("virus_properties", "dummy_files/virus_properties.json"),
+        qc = config.get("qc_json", "dummy_files/qc.json"),
+        example_data = config.get("example_data", config["reference"]),
+    output:
+        config['dataset_dir'] + "/tree.json",
+    params:
+        dataset_dir = config['dataset_dir']
+    shell:
+        """
+        cp {input} {params.dataset_dir}
+        """
