@@ -49,6 +49,10 @@ refine_options: "--root best --timetree --keep-polytomies"
 ```
 In absence of a `clades.tsv`, the workflow will attempt to construct a clade annotation from metadata by finding monophyletic clades that share a given clade annotation.
 
+### Dummy files
+currently nextclade requires several input files such as `primers.csv` which were introduced for a specific pathogen but are irrelevant for most.
+If these files are not specified, the workflow will use those in the `dummy_files` directory.
+
 
 
 
