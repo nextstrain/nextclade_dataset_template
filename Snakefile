@@ -22,7 +22,7 @@ rule align:
     threads: 4
     shell:
         """
-        ./nextalign run -j {threads} -r {input.ref} -m {input.annotation} --output-fasta {output.alignment} --output-translations {params.translations} \
+        nextalign run -j {threads} -r {input.ref} -m {input.annotation} --output-fasta {output.alignment} --output-translations {params.translations} \
                             --output-insertions {output.insertions} --include-reference --gap-alignment-side right \
                         --penalty-gap-open 12 --penalty-gap-open-out-of-frame 14 --penalty-gap-open-in-frame 10 \
                         {input.sequences}
