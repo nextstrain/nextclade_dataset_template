@@ -23,6 +23,28 @@ def get_gff(accession):
     import urllib
     return [x.decode() for x in urllib.request.urlopen(url).readlines()]
 
+def annotate_sequence(seq, cds):
+    from Bio.SeqFeature import SeqFeature
+    from Bio.SeqFeature import FeatureLocation, SimpleLocation, CompoundLocation
+    strands = {'+':1, '-':-1}
+    new_features = [feat for feat in seq.features if feat.type=='source']
+    for cdsid, segments in cds.items():
+        if len(segments)==0:
+            continue
+        elif len(segments)==1:
+            loc = FeatureLocation(int(segments[0][0][3])-1, int(segments[0][0][4]),
+                                  strand = strands.get(segments[0][0][6], 0))
+        else:
+            loc = CompoundLocation([SimpleLocation(int(seg[0][3])-1, int(seg[0][4]),
+                                  strand = strands.get(seg[0][6], 0)) for seg in segments])
+
+        feat = SeqFeature(location = loc, type=segments[0][0][2],
+                          qualifiers=segments[0][1], id=cdsid)
+        # to appease augur, overwrite 'locus_tag' with the 'Name' attribute used in the GFF file to identify the CDS
+        feat.qualifiers['locus_tag'] = feat.qualifiers['Name']
+        new_features.append(feat)
+    seq.features = new_features
+    return seq
 
 if __name__=="__main__":
     args = parse_args()
@@ -92,6 +114,9 @@ if __name__=="__main__":
                 new_attributes['Name']=names_by_id[segment_id]
                 if "Parent" in new_attributes: new_attributes.pop("Parent")
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
+
+    reannotated_seq = annotate_sequence(reference, streamlined_cds)
+    SeqIO.write(reannotated_seq, f"{args.output_dir}/reference.gb", "genbank")
 
     # write the gff file as a simple text file line by line
     with open(f"{args.output_dir}/annotation.gff", "w") as f:
