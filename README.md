@@ -10,10 +10,10 @@ This step requires some user interaction. You need to specify the accession numb
 ```
 python scripts/generate_from_genbank.py --reference <accession> --output-dir <output-directory>
 ```
-The script will fetch the sequence and annotation from NCBI and will ask you to rename CDS or proteins to sensible names. This interactive procedure is only sensible for small viral genomes, for larger genomes like MPXV you will want to use a different method.
-The scripts outputs a `reference.fasta` and an `annotation.gff` in the specified directory.
-These two files are required to align and translate using `nextclade` and `nextalign`.
-We suggest putting these files into the profile associated with the dataset.
+The script will fetch the sequence and annotation from NCBI and will ask you to rename CDS or proteins to sensible names. These names need to be unique. This interactive procedure is only sensible for small viral genomes, for larger genomes like MPXV you will want to use a different method.
+The scripts outputs a `reference.fasta` file, a `reference.gb` file,  and an `annotation.gff` in the specified directory.
+The genbank (`.gb`) file is only required for the augur pipeline, the `fasta` and `gff` files are required by `nextclade` to align and translate.
+We suggest putting these files into the profile or config directory associated with the dataset.
 
 For HIV-1, this could look like this:
 ```
@@ -49,9 +49,8 @@ refine_options: "--root best --timetree --keep-polytomies"
 ```
 In absence of a `clades.tsv`, the workflow will attempt to construct a clade annotation from metadata by finding monophyletic clades that share a given clade annotation.
 
-### Dummy files
-currently nextclade requires several input files such as `primers.csv` which were introduced for a specific pathogen but are irrelevant for most.
-If these files are not specified, the workflow will use those in the `dummy_files` directory.
+### Config files
+In addition, to a reference and a tree, nextclade requires a `pathogen.json` file that specifies various parameters and display defaults for nextclade datasets.
 
 
 

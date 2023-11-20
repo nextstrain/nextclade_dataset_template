@@ -46,6 +46,19 @@ def annotate_sequence(seq, cds):
     seq.features = new_features
     return seq
 
+
+def check_name(new_name):
+    forbidden_chars = ' ,.;:()[]'
+    if any([c in new_name for c in forbidden_chars]):
+        print(f"ERROR: the CDS name contains invalid characters '{forbidden_chars}' or spaces.")
+        print("These have been replaced by '_', but you might want to start over with different names.")
+        for c in forbidden_chars:
+            new_name = new_name.replace(c, '_')
+
+    if len(new_name)>20:
+        print(f"WARNING: this CDS name '{new_name}' is long, this might result in cumbersome output")
+    return new_name
+
 if __name__=="__main__":
     args = parse_args()
     reference = get_reference_sequence(args.reference)
@@ -74,24 +87,61 @@ if __name__=="__main__":
             all_cds[feature_id]['mature_protein'].append([entries[:-1], attributes])
 
 
+    annotation_choice = 0
+    if any([len(feat)>1 for feat in all_cds.values()]):
+        print("\nFor polypeptides annotated in multiple ways, you need to choose between different annotations (CDS or mature peptides/proteins).\n")
+        while True:
+            annotation_choice = input("For features with two annotations, use always CDS [1], always mature_protein [2], or pick on a case-by-case basis [0]: ")
+            try:
+                annotation_choice = int(annotation_choice)
+                assert annotation_choice<3
+                break
+            except:
+                print(f"You input '{annotation_choice}' is not valid. Please enter one of [0, 1, 2]")
+
+    available_attributes_by_type = {'CDS':set(), 'mature_protein': set()}
+    for annot, annot_set in available_attributes_by_type.items():
+        for feat in all_cds.values():
+            for seg in feat[annot]:
+                if len(annot_set):
+                    annot_set = annot_set.intersection(list(seg[1].keys()))
+                else:
+                    annot_set = annot_set.union(list(seg[1].keys()))
+        available_attributes_by_type[annot] = annot_set
+        print(f"\nCommon attributes of all available {annot} annotations are:\n", annot_set, '\n')
+
+    available_attributes = available_attributes_by_type['CDS'] if annot_set==1 else \
+                           available_attributes_by_type['CDS'].intersection(available_attributes_by_type['mature_protein'])
+
+    print("Note that CDS names should be short, unique, and recognizable as they are used to label amino acid mutations. Space, commas, colons, etc are not allowed.\n")
+    while True:
+        name_choice = input("Specify field to use as CDS name or leave empty for manual choice: ")
+        if name_choice in available_attributes or name_choice=='':
+            break
+        else:
+            print("invalid choice: ", name_choice)
+
     streamlined_cds = {}
     names_by_id = {}
+    name_count = defaultdict(int)
     # loop through all CDS and ask the user to pick one of the annotations
     # allow renaming of the CDS to user friendly names
     for cds_id, cds_sets in all_cds.items():
-        if len(cds_sets)>1:
-            print(f"\nCDS {cds_id} is annotated in multiple ways:")
-            for i, (cds_set, segments) in enumerate(cds_sets.items()):
-                print(f"\t{cds_set} with a total of {len(segments)} items [{i+1}]")
-            choice = int(input("Please pick number in brackets to choose one (0 for omission): "))
-            if choice:
-                cds_set = list(cds_sets.keys())[choice-1]
-                segments = cds_sets[cds_set]
-            else:
-                continue
+        if annotation_choice==0:
+            if len(cds_sets)>1:
+                print(f"\nCDS {cds_id} is annotated in multiple ways:")
+                for i, (cds_set, segments) in enumerate(cds_sets.items()):
+                    print(f"\t{cds_set} with a total of {len(segments)} items [{i+1}]")
+                choice = int(input("Please pick number in brackets to choose one (0 for omission): "))
+                if choice:
+                    cds_set = list(cds_sets.keys())[choice-1]
+                else:
+                    continue
         else:
-            cds_set = list(cds_sets.keys())[0]
-            segments = cds_sets[cds_set]
+            if len(cds_sets)>1:
+                cds_set = list(cds_sets.keys())[annotation_choice-1]
+
+        segments = cds_sets[cds_set]
 
         for segment in segments:
             segment_id = segment[1]["ID"]
@@ -99,14 +149,23 @@ if __name__=="__main__":
             if segment_id not in streamlined_cds:
                 streamlined_cds[segment_id] = []
 
-                print(f"Attributes of the segment with ID='{segment_id}' are:")
-                for k,v in segment[1].items():
-                    print(f'\t\t{k}:\t{v}')
-                new_name = input("Enter desired name (leave empty to drop): ")
-                if new_name:
-                    names_by_id[segment_id] = new_name
+                if name_choice:
+                    new_name = segment[1][name_choice]
                 else:
-                    continue
+                    print(f"Attributes of the segment with ID='{segment_id}' are:")
+                    for k,v in segment[1].items():
+                        print(f'\t\t{k}:\t{v}')
+                    new_name = input("Enter desired name (leave empty to drop): ")
+                    if new_name=='': continue
+
+                new_name = check_name(new_name)
+                name_count[new_name] += 1
+                if name_count[new_name]>1:
+                    print(f"CDS name {new_name} is not unique, attaching index to make unique.")
+                    new_name = f"{new_name}_{name_count[new_name]:03d}"
+
+                names_by_id[segment_id] = new_name
+
             # if renamed and selected, add the segment to the list of segments
             if segment_id in names_by_id:
                 new_entries, new_attributes = list(segment[0]), dict(segment[1])
@@ -115,11 +174,10 @@ if __name__=="__main__":
                 if "Parent" in new_attributes: new_attributes.pop("Parent")
                 streamlined_cds[segment_id].append([new_entries, new_attributes])
 
-    reannotated_seq = annotate_sequence(reference, streamlined_cds)
-    SeqIO.write(reannotated_seq, f"{args.output_dir}/reference.gb", "genbank")
-
+    gff_fname = f"{args.output_dir}/annotation.gff"
+    print(f"\nWriting annotation to GFF file: {gff_fname}\n")
     # write the gff file as a simple text file line by line
-    with open(f"{args.output_dir}/annotation.gff", "w") as f:
+    with open(gff_fname, "w") as f:
         # write the header and the region line
         for line in gff:
             entries = line.split('\t')
@@ -128,7 +186,13 @@ if __name__=="__main__":
 
         # write the CDS lines
         for cds in streamlined_cds:
+            print(f"Exporting CDS '{names_by_id[cds]}' with {len(streamlined_cds[cds])} segments.")
             for segment in streamlined_cds[cds]:
                 attributes = ';'.join([f"{k}={v}" for k,v in sorted(segment[1].items(), key=lambda x:(x[0]!='Name', len(x[1])))])
                 f.write('\t'.join(segment[0])+'\t' + attributes + '\n')
+
+    gb_fname = f"{args.output_dir}/reference.gb"
+    print("\nWriting annotation to genbank file: ", gb_fname)
+    reannotated_seq = annotate_sequence(reference, streamlined_cds)
+    SeqIO.write(reannotated_seq, gb_fname, "genbank")
 
