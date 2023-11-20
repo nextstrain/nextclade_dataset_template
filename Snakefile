@@ -1,6 +1,10 @@
 build_dir = config.get('build_dir', 'results')
 genes = config.get('genes', [])
 
+if "include" in config:
+    include: config["include"]
+
+
 if "clades" in config:
     print(f"using clades-tsv '{config['clades']}' to assign clades")
     ruleorder: clades_from_tsv>clades_from_metadata
@@ -22,15 +26,15 @@ rule align:
     threads: 4
     shell:
         """
-        nextalign run -j {threads} -r {input.ref} -m {input.annotation} --output-fasta {output.alignment} --output-translations {params.translations} \
-                            --output-insertions {output.insertions} --include-reference --gap-alignment-side right \
+        ./nextalign run -j {threads} -r {input.ref} -m {input.annotation} --output-fasta {output.alignment} --output-translations {params.translations} \
+                            --output-insertions {output.insertions} --gap-alignment-side right \
                         --penalty-gap-open 12 --penalty-gap-open-out-of-frame 14 --penalty-gap-open-in-frame 10 \
                         {input.sequences}
         """
 
 rule tree:
     input:
-        aln = build_dir + "/alignment.fasta"
+        aln = config.get("tree_alignment", build_dir + "/alignment.fasta")
     output:
         tree = build_dir + "/tree_raw.nwk"
     shell:
