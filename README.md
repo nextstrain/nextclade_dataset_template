@@ -1,5 +1,15 @@
 ## Workflow to boot-strap nextclade datasets
 
+> ⚠️ This project is retired. For the most up-to-date alternatives, see:
+>  - https://github.com/nextstrain/nextclade_data
+>  - https://docs.nextstrain.org/projects/nextclade 
+
+
+<details>
+<summary>Original content of README.md (click to expand)</summary>
+
+## Workflow to boot-strap nextclade datasets
+
 Nextclade requires datasets for pathogen specific information and rich datasets allow sophisticated analysis.
 But many of the basic functionalities like alignment and mutations calling only require a reference sequence and its annotation.
 
@@ -51,6 +61,10 @@ In absence of a `clades.tsv`, the workflow will attempt to construct a clade ann
 
 ### Config files
 In addition, to a reference and a tree, nextclade requires a `pathogen.json` file that specifies various parameters and display defaults for nextclade datasets.
+
+
+</details>
+
 
 
 
